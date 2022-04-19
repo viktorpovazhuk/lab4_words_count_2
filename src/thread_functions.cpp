@@ -4,6 +4,8 @@
 
 #include "thread_functions.h"
 
+using mapStrInt = std::map<std::string, int>;
+
 //#define SERIAL
 
 /*
@@ -60,8 +62,8 @@ void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_ma
         localDict.clear();
 
 #ifdef SERIAL
-      fileNumber++;
-      std::cout << fileNumber << "\n";
+        fileNumber++;
+        std::cout << fileNumber << "\n";
 #endif
     }
 }
@@ -105,18 +107,45 @@ void indexFile(std::vector<std::string> &words, std::string &file) {
 
 }
 
-void mergeDicts(std::unordered_map<std::string, int> &dict, std::map<std::string, int> &localDict) {
-    std::map<std::string, int>::iterator i;
-    try {
-        for (i = localDict.begin(); i != localDict.end(); i++) {
-            if (dict.find(i->first) != dict.end()) {
-                dict.at(i->first) += i->second;
-            } else {
-                dict.insert({i->first, i->second});
-            }
+void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
+    while (true) {
+        mapStrInt dict1 = getDict(dictsQueue, numOfWorkingIndexers);
+        if (dict1.empty()) {
+            return;
         }
-    } catch (std::error_code e) {
-        std::cerr << "Error code " << e << ". Occurred while merging dicts" << std::endl;
+        mapStrInt dict2 = getDict(dictsQueue, numOfWorkingIndexers);
+        if (dict2.empty()) {
+            return;
+        }
+
+        try {
+            for (auto &i: dict1) {
+                if (dict2.find(i.first) != dict2.end()) {
+                    dict2.at(i.first) += i.second;
+                } else {
+                    dict2.insert({i.first, i.second});
+                }
+            }
+        } catch (std::error_code &e) {
+            std::cerr << "Error code " << e << ". Occurred while merging dicts" << std::endl;
+        }
+
+        dictsQueue.enque(std::move(dict2));
     }
+}
+
+mapStrInt getDict(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
+    mapStrInt dict = dictsQueue.deque();
+    if (dict.empty()) {
+        if (numOfWorkingIndexers == 0) {
+            // don't move because return it
+            dictsQueue.enque(dict);
+        }
+            // insert poisson pill -> numOfIndexers--
+        else {
+            dict = dictsQueue.deque();
+        }
+    }
+    return dict;
 }
 

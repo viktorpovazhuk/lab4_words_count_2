@@ -26,4 +26,6 @@ void indexFile(std::vector <std::string> &words, std::string& file);
 
 void mergeDicts(std::unordered_map<std::string, int> &dict, std::map<std::string, int> &localDict);
 
+std::map<std::string, int> getDict(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, int &numOfWorkingIndexers);
+
 #endif //SERIAL_THREAD_FUNCTIONS_H

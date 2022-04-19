@@ -94,6 +94,10 @@ int main(int argc, char *argv[]) {
 
     findAndCountWords(numberOfThreads, threads, filesContents, wordsDict, globalDictMutex, timeFindingFinish);
 
+    // TODO: 1. create shared var numOfWorkingIndexers
+    //  2. start separate threads for indexing and merging
+    //  3. add numOfWorkingIndexers decrement in indexing function
+
     if (filesEnumThread.joinable()) {
         filesEnumThread.join();
     }

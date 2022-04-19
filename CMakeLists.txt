@@ -65,11 +65,11 @@ include(cmake/CompilerWarnings.cmake)
 #! Project main executable source compilation
 add_executable(${PROJECT_NAME} src/main.cpp
 		src/options_parser.cpp src/options_parser.h
-		src/thread_safe_queue.cpp src/thread_safe_queue.h
+		src/thread_safe_queue.h
 		src/time_measurement.h src/files_methods.h src/files_methods.cpp
 		src/write_in_file.h src/write_in_file.cpp
 		src/thread_functions.h src/thread_functions.cpp
-		src/errors.h)
+		src/errors.h src/ReadFile.h)
 
 #add_executable(${ONE_THREAD_EXE} src/serial.cpp
 #        src/options_parser.cpp src/options_parser.h
@@ -77,7 +77,7 @@ add_executable(${PROJECT_NAME} src/main.cpp
 #
 add_executable(${TEST_EXECUTABLE} tests/test_ts_queue.cpp
 		src/options_parser.cpp src/options_parser.h
-		src/thread_safe_queue.cpp src/thread_safe_queue.h)
+		src/thread_safe_queue.h tests/pseudocode.cpp)
 
 #! Put path to your project headers
 target_include_directories(${PROJECT_NAME} PRIVATE options_parser)
