@@ -49,22 +49,22 @@ config_file_options_t::config_file_options_t() {
             ("indir", po::value<string>(), "Input directory")
             ("out_by_a", po::value<string>(), "Path of alphabetically sorted result file")
             ("out_by_n", po::value<string>(), "Path of numerically sorted result file")
-            ("indexing_threads", po::value<int>(), "Number of threads");
+            ("indexing_threads", po::value<int>(), "Number of indexing threads")
+            ("merging_threads", po::value<int>(), "Number of merging threads");
 }
 
-config_file_options_t::config_file_options_t(const string& config_file) :
+config_file_options_t::config_file_options_t(const string &config_file) :
         config_file_options_t() // Delegate constructor
 {
     parse(config_file);
 }
 
-void config_file_options_t::parse(const string& config_file) {
+void config_file_options_t::parse(const string &config_file) {
     try {
         std::ifstream ifs{config_file.c_str()};
         if (ifs) {
             po::store(parse_config_file(ifs, general_opt), var_map);
-        }
-        else {
+        } else {
             throw OpenConfigFileException("Can't open config file");
         }
         notify(var_map);
@@ -76,6 +76,7 @@ void config_file_options_t::parse(const string& config_file) {
         out_by_n = var_map["out_by_n"].as<string>();
         out_by_n.erase(std::remove(out_by_n.begin(), out_by_n.end(), '\"'), out_by_n.end());
         indexing_threads = var_map["indexing_threads"].as<int>();
+        merging_threads = var_map["indexing_threads"].as<int>();
     } catch (OpenConfigFileException &ex) {
         throw OpenConfigFileException(ex.what()); // Convert to our error type
     } catch (std::exception &ex) {

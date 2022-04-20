@@ -71,6 +71,12 @@ public:
         return mDeque.size();
     }
 
+    // Return if queue is empty.
+    size_t empty() const {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mDeque.empty();
+    }
+
 private:
     std::deque<T> mDeque;
     mutable std::mutex mMutex;

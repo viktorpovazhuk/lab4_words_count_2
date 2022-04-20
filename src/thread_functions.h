@@ -24,7 +24,7 @@ void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_ma
 
 void indexFile(std::vector <std::string> &words, std::string& file);
 
-void mergeDicts(std::unordered_map<std::string, int> &dict, std::map<std::string, int> &localDict);
+void mergeDicts(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, std::chrono::time_point<std::chrono::high_resolution_clock> &timeMergingFinish);
 
 std::map<std::string, int> getDict(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, int &numOfWorkingIndexers);
 

@@ -1,14 +1,16 @@
-#include <iostream>
-#include "thread_safe_queue.h"
-#include <filesystem>
-#include <string>
-#include <fstream>
 #include "files_methods.h"
 #include "options_parser.h"
 #include "errors.h"
 #include "thread_functions.h"
 #include "write_in_file.h"
 #include "time_measurement.h"
+#include "thread_safe_queue.h"
+#include "ReadFile.h"
+
+#include <iostream>
+#include <filesystem>
+#include <string>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -18,13 +20,18 @@ using std::cerr;
 using std::endl;
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+using mapStrInt = std::map<std::string, int>;
 
 //#define PRINT_CONTENT
 #define PARALLEL
 
-void findAndCountWords(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<string> &filesContents,
-                       std::unordered_map<std::string, int> &wordsDict, std::mutex &globalDictMutex,
-                       TimePoint &timeFinding);
+void
+startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,
+                     TimePoint &timeIndexingFinish);
+
+void startMergingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<mapStrInt> &dicts,
+                         TimePoint &timeMergingFinish);
+
 
 int main(int argc, char *argv[]) {
     string configFilename;
@@ -56,7 +63,8 @@ int main(int argc, char *argv[]) {
 
     std::string fn = config_file_options->out_by_n;
     std::string fa = config_file_options->out_by_a;
-    int numberOfThreads = config_file_options->indexing_threads;
+    int numberOfIndexingThreads = config_file_options->indexing_threads;
+    int numberOfMergingThreads = config_file_options->merging_threads;
 
     FILE *file;
     file = fopen(fn.c_str(), "r");
@@ -76,27 +84,31 @@ int main(int argc, char *argv[]) {
     }
 
     auto timeStart = get_current_time_fenced();
-    TimePoint timeFindingFinish, timeReadingFinish, timeWritingFinish;
+    TimePoint timeIndexingFinish, timeMergingFinish, timeReadingFinish, timeWritingFinish;
 
     ThreadSafeQueue<fs::path> paths;
-    ThreadSafeQueue<string> filesContents;
+    ThreadSafeQueue<ReadFile> filesContents;
     filesContents.setMaxElements(100);
-    std::unordered_map<std::string, int> wordsDict;
+    ThreadSafeQueue<mapStrInt> filesDicts;
+    filesDicts.setMaxElements(100);
 
-    std::mutex globalDictMutex;
-    std::vector<std::thread> threads;
-    threads.reserve(numberOfThreads);
+    std::vector<std::thread> indexingThreads;
+    indexingThreads.reserve(numberOfIndexingThreads);
+    std::vector<std::thread> mergingThreads;
+    mergingThreads.reserve(numberOfMergingThreads);
+
+    int numOfWorkingIndexers = numberOfIndexingThreads;
+    std::mutex numOfWorkingIndexersMutex;
 
 #ifdef PARALLEL
     std::thread filesEnumThread(findFiles, std::ref(config_file_options->indir), std::ref(paths));
 
     std::thread filesReadThread(readFiles, std::ref(paths), std::ref(filesContents), std::ref(timeReadingFinish));
 
-    findAndCountWords(numberOfThreads, threads, filesContents, wordsDict, globalDictMutex, timeFindingFinish);
+    startIndexingThreads(numberOfIndexingThreads, indexingThreads, filesContents, numOfWorkingIndexers,
+                         numOfWorkingIndexersMutex, timeIndexingFinish);
 
-    // TODO: 1. create shared var numOfWorkingIndexers
-    //  2. start separate threads for indexing and merging
-    //  3. add numOfWorkingIndexers decrement in indexing function
+    startMergingThreads(numberOfMergingThreads, mergingThreads, filesDicts, timeMergingFinish);
 
     if (filesEnumThread.joinable()) {
         filesEnumThread.join();
@@ -107,12 +119,17 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        for (auto &thread: threads) {
+        for (auto &thread: indexingThreads) {
             if (thread.joinable()) {
                 thread.join();
             }
         }
-    } catch (std::error_code e) {
+        for (auto &thread: indexingThreads) {
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+    } catch (std::error_code &e) {
         std::cerr << "Error code " << e << ". Occurred while joining threads." << std::endl;
     }
 
@@ -152,34 +169,63 @@ int main(int argc, char *argv[]) {
 
     auto timeWritingStart = get_current_time_fenced();
 
-    writeInFiles(fn, fa, wordsDict);
+    // TODO: rewrite function for map
+    writeInFiles(fn, fa, filesDicts.deque());
 
     timeWritingFinish = get_current_time_fenced();
 
     auto totalTimeFinish = get_current_time_fenced();
 
     auto timeReading = to_us(timeReadingFinish - timeStart);
-    auto timeFinding = to_us(timeFindingFinish - timeStart);
+    auto timeIndexing = to_us(timeIndexingFinish - timeStart);
+    auto timeMerging = to_us(timeMergingFinish - timeStart);
     auto timeWriting = to_us(timeWritingFinish - timeWritingStart);
     auto timeTotal = to_us(totalTimeFinish - timeStart);
 
-    cout << "Total=" << timeTotal << "\n"
-         << "Reading=" << timeReading << "\n"
-         << "Finding=" << timeFinding << "\n"
-         << "Writing=" << timeWriting;
+    // TODO: split in index and merge?
+    std::cout << "Total=" << timeTotal << "\n"
+              << "Reading=" << timeReading << "\n"
+              << "Indexing=" << timeIndexing << "\n"
+              << "Merging=" << timeMerging << "\n"
+              << "Writing=" << timeWriting;
 
     return 0;
 }
 
-void findAndCountWords(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<string> &filesContents,
-                       std::unordered_map<std::string, int> &wordsDict, std::mutex &globalDictMutex,
-                       std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish) {
+//void findAndCountWords(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<string> &filesContents,
+//                       std::unordered_map<std::string, int> &wordsDict, std::mutex &globalDictMutex,
+//                       std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish) {
+//    try {
+//        for (int i = 0; i < numberOfThreads; i++) {
+//            threads.emplace_back(overworkFile, std::ref(filesContents), std::ref(wordsDict), std::ref(globalDictMutex),
+//                                 std::ref(timeFindingFinish));
+//        }
+//    } catch (std::error_code e) {
+//        std::cerr << "Error code " << e << ". Occurred while splitting in threads." << std::endl;
+//    }
+//}
+
+void
+startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,
+                     int &numOfWorkingIndexers, std::mutex &numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish) {
     try {
         for (int i = 0; i < numberOfThreads; i++) {
-            threads.emplace_back(overworkFile, std::ref(filesContents), std::ref(wordsDict), std::ref(globalDictMutex),
-                                 std::ref(timeFindingFinish));
+            // TODO: { mutex.lock() { if numberOfThreads == 1 => dictsQueue.enque(); numberOfThreads--; } }
+            threads.emplace_back(indexFiles, std::ref(filesContents), std::ref(numOfWorkingIndexers),
+                                 std::ref(numOfWorkingIndexersMutex), std::ref(timeIndexingFinish));
         }
-    } catch (std::error_code e) {
+    } catch (std::error_code &e) {
+        std::cerr << "Error code " << e << ". Occurred while splitting in threads." << std::endl;
+    }
+}
+
+void startMergingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<mapStrInt> &dicts,
+                         TimePoint &timeMergingFinish) {
+    try {
+        for (int i = 0; i < numberOfThreads; i++) {
+            threads.emplace_back(mergeDicts, std::ref(dicts), std::ref(timeMergingFinish));
+        }
+    } catch (std::error_code &e) {
         std::cerr << "Error code " << e << ". Occurred while splitting in threads." << std::endl;
     }
 }

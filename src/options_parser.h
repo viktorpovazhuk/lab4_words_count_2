@@ -74,7 +74,7 @@ public:
     void parse(const std::string& config_file);
 
     string indir, out_by_a, out_by_n;
-    int indexing_threads = 0;
+    int indexing_threads = 0, merging_threads=0;
 };
 
 #endif //OPTIONS_PARSER_CONFIG_FILE_H

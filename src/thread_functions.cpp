@@ -4,6 +4,7 @@
 
 #include "thread_functions.h"
 
+using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 using mapStrInt = std::map<std::string, int>;
 
 //#define SERIAL
@@ -107,15 +108,30 @@ void indexFile(std::vector<std::string> &words, std::string &file) {
 
 }
 
-void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
+void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, TimePoint &timeMergingFinish) {
     while (true) {
-        mapStrInt dict1 = getDict(dictsQueue, numOfWorkingIndexers);
-        if (dict1.empty()) {
-            return;
+        mapStrInt dict1 = dictsQueue.deque();
+        while (dict1.empty()) {
+            if (dictsQueue.empty()) {
+                dictsQueue.enque(dict1);
+                timeMergingFinish = get_current_time_fenced();
+                return;
+            } else {
+                dictsQueue.enque(dict1);
+                dict1 = dictsQueue.deque();
+            }
         }
-        mapStrInt dict2 = getDict(dictsQueue, numOfWorkingIndexers);
-        if (dict2.empty()) {
-            return;
+        mapStrInt dict2 = dictsQueue.deque();
+        while (dict2.empty()) {
+            if (dictsQueue.empty()) {
+                dictsQueue.enque(dict1);
+                dictsQueue.enque(dict2);
+                timeMergingFinish = get_current_time_fenced();
+                return;
+            } else {
+                dictsQueue.enque(dict2);
+                dict2 = dictsQueue.deque();
+            }
         }
 
         try {
@@ -134,18 +150,18 @@ void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexer
     }
 }
 
-mapStrInt getDict(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
-    mapStrInt dict = dictsQueue.deque();
-    if (dict.empty()) {
-        if (numOfWorkingIndexers == 0) {
-            // don't move because return it
-            dictsQueue.enque(dict);
-        }
-            // insert poisson pill -> numOfIndexers--
-        else {
-            dict = dictsQueue.deque();
-        }
-    }
-    return dict;
-}
+//mapStrInt getDict(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
+//    mapStrInt dict = dictsQueue.deque();
+//    if (dict.empty()) {
+//        if (numOfWorkingIndexers == 0) {
+//            // don't move because return it
+//            dictsQueue.enque(dict);
+//        }
+//            // insert poisson pill -> numOfIndexers--
+//        else {
+//            dict = dictsQueue.deque();
+//        }
+//    }
+//    return dict;
+//}
 
