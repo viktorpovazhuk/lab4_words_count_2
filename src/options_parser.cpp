@@ -50,7 +50,11 @@ config_file_options_t::config_file_options_t() {
             ("out_by_a", po::value<string>(), "Path of alphabetically sorted result file")
             ("out_by_n", po::value<string>(), "Path of numerically sorted result file")
             ("indexing_threads", po::value<int>(), "Number of indexing threads")
-            ("merging_threads", po::value<int>(), "Number of merging threads");
+            ("merging_threads", po::value<int>(), "Number of merging threads")
+            ("max_file_size", po::value<int>(), "Number of maximum file size")
+            ("filenames_queue_max_size", po::value<int>(), "Number of max files in filenames queue")
+            ("raw_files_queue_size", po::value<int>(), "Number of max files in raw queue")
+            ("dictionaries_queue_size", po::value<int>(), "Number of max dictionaries in queue");
 }
 
 config_file_options_t::config_file_options_t(const string &config_file) :
@@ -76,7 +80,11 @@ void config_file_options_t::parse(const string &config_file) {
         out_by_n = var_map["out_by_n"].as<string>();
         out_by_n.erase(std::remove(out_by_n.begin(), out_by_n.end(), '\"'), out_by_n.end());
         indexing_threads = var_map["indexing_threads"].as<int>();
-        merging_threads = var_map["indexing_threads"].as<int>();
+        merging_threads = var_map["merging_threads"].as<int>();
+        max_file_size = var_map["max_file_size"].as<std::uintmax_t>();
+        filenames_queue_max_size = var_map["filenames_queue_max_size"].as<int>();
+        raw_files_queue_size = var_map["raw_files_queue_size"].as<int>();
+        dictionaries_queue_size = var_map["dictionaries_queue_size"].as<int>();
     } catch (OpenConfigFileException &ex) {
         throw OpenConfigFileException(ex.what()); // Convert to our error type
     } catch (std::exception &ex) {

@@ -65,6 +65,10 @@ int main(int argc, char *argv[]) {
     std::string fa = config_file_options->out_by_a;
     int numberOfIndexingThreads = config_file_options->indexing_threads;
     int numberOfMergingThreads = config_file_options->merging_threads;
+    int maxFileSize = config_file_options->max_file_size;
+    int maxFilenamesQSize = config_file_options->filenames_queue_max_size;
+    int maxRawFilesQSize = config_file_options->raw_files_queue_size;
+    int maxDictionariesQSize = config_file_options->dictionaries_queue_size;
 
     FILE *file;
     file = fopen(fn.c_str(), "r");
@@ -87,10 +91,11 @@ int main(int argc, char *argv[]) {
     TimePoint timeIndexingFinish, timeMergingFinish, timeReadingFinish, timeWritingFinish;
 
     ThreadSafeQueue<fs::path> paths;
+    paths.setMaxElements(maxFilenamesQSize);
     ThreadSafeQueue<ReadFile> filesContents;
-    filesContents.setMaxElements(100);
+    filesContents.setMaxElements(maxRawFilesQSize);
     ThreadSafeQueue<mapStrInt> filesDicts;
-    filesDicts.setMaxElements(100);
+    filesDicts.setMaxElements(maxDictionariesQSize);
 
     std::vector<std::thread> indexingThreads;
     indexingThreads.reserve(numberOfIndexingThreads);
@@ -103,7 +108,7 @@ int main(int argc, char *argv[]) {
 #ifdef PARALLEL
     std::thread filesEnumThread(findFiles, std::ref(config_file_options->indir), std::ref(paths));
 
-    std::thread filesReadThread(readFiles, std::ref(paths), std::ref(filesContents), std::ref(timeReadingFinish));
+    std::thread filesReadThread(readFiles, std::ref(paths), std::ref(filesContents), maxFileSize, std::ref(timeReadingFinish));
 
     startIndexingThreads(numberOfIndexingThreads, indexingThreads, filesContents, numOfWorkingIndexers,
                          numOfWorkingIndexersMutex, timeIndexingFinish);
@@ -191,19 +196,6 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-//void findAndCountWords(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<string> &filesContents,
-//                       std::unordered_map<std::string, int> &wordsDict, std::mutex &globalDictMutex,
-//                       std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish) {
-//    try {
-//        for (int i = 0; i < numberOfThreads; i++) {
-//            threads.emplace_back(overworkFile, std::ref(filesContents), std::ref(wordsDict), std::ref(globalDictMutex),
-//                                 std::ref(timeFindingFinish));
-//        }
-//    } catch (std::error_code e) {
-//        std::cerr << "Error code " << e << ". Occurred while splitting in threads." << std::endl;
-//    }
-//}
 
 void
 startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,

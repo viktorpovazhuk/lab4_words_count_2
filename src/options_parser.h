@@ -69,12 +69,13 @@ class config_file_options_t : public options_parser_t {
 public:
     config_file_options_t();
 
-    config_file_options_t(const std::string& config_file);
+    config_file_options_t(const std::string &config_file);
 
-    void parse(const std::string& config_file);
+    void parse(const std::string &config_file);
 
     string indir, out_by_a, out_by_n;
-    int indexing_threads = 0, merging_threads=0;
+    int indexing_threads = 0, merging_threads = 0, filenames_queue_max_size = 0, raw_files_queue_size = 0, dictionaries_queue_size = 0;
+    std::uintmax_t max_file_size = 0;
 };
 
 #endif //OPTIONS_PARSER_CONFIG_FILE_H

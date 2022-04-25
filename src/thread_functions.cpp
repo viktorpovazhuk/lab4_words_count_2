@@ -149,19 +149,3 @@ void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, TimePoint &timeMergingFi
         dictsQueue.enque(std::move(dict2));
     }
 }
-
-//mapStrInt getDict(ThreadSafeQueue<mapStrInt> &dictsQueue, int &numOfWorkingIndexers) {
-//    mapStrInt dict = dictsQueue.deque();
-//    if (dict.empty()) {
-//        if (numOfWorkingIndexers == 0) {
-//            // don't move because return it
-//            dictsQueue.enque(dict);
-//        }
-//            // insert poisson pill -> numOfIndexers--
-//        else {
-//            dict = dictsQueue.deque();
-//        }
-//    }
-//    return dict;
-//}
-

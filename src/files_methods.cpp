@@ -17,9 +17,13 @@ void findFiles(string &filesDirectory, ThreadSafeQueue<fs::path> &paths) {
     paths.enque(fs::path(""));
 }
 
-void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &filesContents, TimePoint &timeReadingFinish) {
+void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &filesContents, std::uintmax_t maxFileSize, TimePoint &timeReadingFinish) {
     auto path = paths.deque();
     while (path != fs::path("")) {
+        if (fs::file_size(path) >= maxFileSize){
+            path = paths.deque();
+            continue;
+        }
         ReadFile readFile;
         if (path.extension() == ".txt") {
             std::ifstream ifs(path);
