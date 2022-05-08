@@ -21,12 +21,12 @@
 #include <archive_entry.h>
 #include "time_measurement.h"
 #include "ReadFile.h"
-//#include "boost/locale.hpp"
+#include "boost/locale.hpp"
 
 
 void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, std::chrono::time_point<std::chrono::system_clock> &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts);
 
-void indexFile(std::vector <std::string> &words, std::string& file);
+void indexFile(boost::locale::boundary::ssegment_index &words, std::string& file);
 
 void mergeDicts(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, std::chrono::time_point<std::chrono::high_resolution_clock> &timeMergingFinish);
 

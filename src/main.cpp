@@ -10,7 +10,6 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
-#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -77,6 +76,9 @@ int main(int argc, char *argv[]) {
 
     std::ofstream MyFile2(fileByAlph);
     MyFile2.close();
+
+    boost::locale::generator gen;
+    std::locale::global(gen("en_US.UTF-8"));
 
     std::chrono::time_point<std::chrono::high_resolution_clock> timeFindingFinish;
     auto timeStart = get_current_time_fenced();

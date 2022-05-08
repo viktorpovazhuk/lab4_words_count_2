@@ -46,14 +46,18 @@ void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingInd
             continue;
         }
 
-        printf("check\n");
-        //boost::locale::boundary::ssegment_index words;
-        std::vector<std::string> words;
+        printf("check - %s\n", file.content.c_str());
+        boost::locale::boundary::ssegment_index words(boost::locale::boundary::word, file.content.begin(), file.content.end());
+        words.rule(boost::locale::boundary::word_letters);
+
         try{
-            indexFile(words, file.content);
+            boost::locale::normalize(file.content);
+            boost::locale::fold_case(file.content);
+
+
+
         } catch(std::error_code e){
             printf("Indexing error");
-            exit(259);
         }
 
 
@@ -90,31 +94,6 @@ void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingInd
     }
 }
 
-void indexFile(std::vector<std::string> &words, std::string &file) {
-
-    try {
-        //boost::locale::normalize(file);
-        //boost::locale::fold_case(file);
-    } catch (std::error_code e) {
-        std::cerr << "Error code " << e << ". Occurred while transforming word to lowercase" << std::endl;
-    }
-
-
-
-
-
-    try {
-        //words(boost::locale::boundary::word,file.begin(),file.end());
-        //words.rule(boost::locale::boundary::word_letters);
-
-
-
-
-    } catch (std::error_code e) {
-        std::cerr << "Error code " << e << ". Occurred while splitting file into words" << std::endl;
-    }
-
-}
 
 void mergeDicts(ThreadSafeQueue<mapStrInt> &dictsQueue, TimePoint &timeMergingFinish) {
     while (true) {
