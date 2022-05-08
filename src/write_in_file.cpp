@@ -6,8 +6,9 @@
 
 
 
-void writeInFiles(std::string& numResults, std::string& alphResults, std::unordered_map<std::string, int> &dict){
+void writeInFiles(std::string& numResults, std::string &alphResults, std::map<std::string, int> &dict){
 
+    std::cout << "Check" << std::endl;
     std::ofstream myfile;
     try{
     myfile.open(numResults);
@@ -15,6 +16,7 @@ void writeInFiles(std::string& numResults, std::string& alphResults, std::unorde
 
     for(auto& el : S) {
         myfile << el.first << " = " << el.second << '\n';
+        std::cout << el.first << " = " << el.second << std::endl;
     }
     myfile.close();
     } catch (std::error_code e){

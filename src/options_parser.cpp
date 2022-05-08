@@ -81,7 +81,7 @@ void config_file_options_t::parse(const string &config_file) {
         out_by_n.erase(std::remove(out_by_n.begin(), out_by_n.end(), '\"'), out_by_n.end());
         indexing_threads = var_map["indexing_threads"].as<int>();
         merging_threads = var_map["merging_threads"].as<int>();
-        max_file_size = var_map["max_file_size"].as<std::uintmax_t>();
+        max_file_size = var_map["max_file_size"].as<int>();
         filenames_queue_max_size = var_map["filenames_queue_max_size"].as<int>();
         raw_files_queue_size = var_map["raw_files_queue_size"].as<int>();
         dictionaries_queue_size = var_map["dictionaries_queue_size"].as<int>();

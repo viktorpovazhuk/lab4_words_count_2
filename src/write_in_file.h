@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <locale>
 
-void writeInFiles(std::string& numResults, std::string& alphResults, std::unordered_map<std::string, int> &dict);
+void writeInFiles(std::string& numResults, std::string &alphResults, std::map<std::string, int> &dict);
 
 
 struct cmpByNum{

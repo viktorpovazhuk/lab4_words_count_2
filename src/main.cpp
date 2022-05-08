@@ -27,7 +27,7 @@ using mapStrInt = std::map<std::string, int>;
 
 void
 startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,
-                     TimePoint &timeIndexingFinish);
+                     int &numOfWorkingIndexers, std::mutex &numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish, ThreadSafeQueue<mapStrInt> &dicts);
 
 void startMergingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<mapStrInt> &dicts,
                          TimePoint &timeMergingFinish);
@@ -36,7 +36,7 @@ void startMergingThreads(int numberOfThreads, std::vector<std::thread> &threads,
 int main(int argc, char *argv[]) {
     string configFilename;
     if (argc < 2) {
-        configFilename = "index.cfg";
+        configFilename = "../configs/index.cfg";
     } else {
         std::unique_ptr<command_line_options_t> command_line_options;
         try {
@@ -51,7 +51,9 @@ int main(int argc, char *argv[]) {
 
     std::unique_ptr<config_file_options_t> config_file_options;
     try {
+
         config_file_options = std::make_unique<config_file_options_t>(configFilename);
+
     }
     catch (OpenConfigFileException &ex) {
         cerr << ex.what() << endl;
@@ -61,8 +63,8 @@ int main(int argc, char *argv[]) {
         return Errors::READ_CFG_FILE;
     }
 
-    std::string fn = config_file_options->out_by_n;
-    std::string fa = config_file_options->out_by_a;
+    std::string fileByNum = config_file_options->out_by_n;
+    std::string fileByAlph = config_file_options->out_by_a;
     int numberOfIndexingThreads = config_file_options->indexing_threads;
     int numberOfMergingThreads = config_file_options->merging_threads;
     int maxFileSize = config_file_options->max_file_size;
@@ -70,23 +72,13 @@ int main(int argc, char *argv[]) {
     int maxRawFilesQSize = config_file_options->raw_files_queue_size;
     int maxDictionariesQSize = config_file_options->dictionaries_queue_size;
 
-    FILE *file;
-    file = fopen(fn.c_str(), "r");
-    if (file) {
-        fclose(file);
-    } else {
-        std::ofstream MyFile(fn);
-        MyFile.close();
-    }
+    std::ofstream MyFile(fileByNum);
+    MyFile.close();
 
-    file = fopen(fa.c_str(), "r");
-    if (file) {
-        fclose(file);
-    } else {
-        std::ofstream MyFile(fa);
-        MyFile.close();
-    }
+    std::ofstream MyFile2(fileByAlph);
+    MyFile2.close();
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeFindingFinish;
     auto timeStart = get_current_time_fenced();
     TimePoint timeIndexingFinish, timeMergingFinish, timeReadingFinish, timeWritingFinish;
 
@@ -110,10 +102,13 @@ int main(int argc, char *argv[]) {
 
     std::thread filesReadThread(readFiles, std::ref(paths), std::ref(filesContents), maxFileSize, std::ref(timeReadingFinish));
 
+
     startIndexingThreads(numberOfIndexingThreads, indexingThreads, filesContents, numOfWorkingIndexers,
-                         numOfWorkingIndexersMutex, timeIndexingFinish);
+                         numOfWorkingIndexersMutex, timeIndexingFinish, filesDicts);
 
     startMergingThreads(numberOfMergingThreads, mergingThreads, filesDicts, timeMergingFinish);
+
+
 
     if (filesEnumThread.joinable()) {
         filesEnumThread.join();
@@ -129,7 +124,8 @@ int main(int argc, char *argv[]) {
                 thread.join();
             }
         }
-        for (auto &thread: indexingThreads) {
+
+        for (auto &thread: mergingThreads) {
             if (thread.joinable()) {
                 thread.join();
             }
@@ -169,13 +165,14 @@ int main(int argc, char *argv[]) {
     cout << "--------------------------" << '\n';
 #endif
 
-    overworkFile(filesContents, wordsDict, globalDictMutex, timeFindingFinish);
+    overworkFile(filesContents, filesDicts);
 #endif
 
     auto timeWritingStart = get_current_time_fenced();
 
-    // TODO: rewrite function for map
-    writeInFiles(fn, fa, filesDicts.deque());
+    // TODO: rewrite function for ma
+    std::map<std::basic_string<char>, int> pointer = filesDicts.deque();
+    writeInFiles(fileByNum, fileByAlph, pointer);
 
     timeWritingFinish = get_current_time_fenced();
 
@@ -197,14 +194,13 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void
-startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,
-                     int &numOfWorkingIndexers, std::mutex &numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish) {
+void startIndexingThreads(int numberOfThreads, std::vector<std::thread> &threads, ThreadSafeQueue<ReadFile> &filesContents,
+                     int &numOfWorkingIndexers, std::mutex &numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish, ThreadSafeQueue<mapStrInt> &dicts) {
     try {
         for (int i = 0; i < numberOfThreads; i++) {
             // TODO: { mutex.lock() { if numberOfThreads == 1 => dictsQueue.enque(); numberOfThreads--; } }
-            threads.emplace_back(indexFiles, std::ref(filesContents), std::ref(numOfWorkingIndexers),
-                                 std::ref(numOfWorkingIndexersMutex), std::ref(timeIndexingFinish));
+            threads.emplace_back(overworkFile, std::ref(filesContents), std::ref(numOfWorkingIndexers),
+                                 std::ref(numOfWorkingIndexersMutex), std::ref(timeIndexingFinish), std::ref(dicts));
         }
     } catch (std::error_code &e) {
         std::cerr << "Error code " << e << ". Occurred while splitting in threads." << std::endl;

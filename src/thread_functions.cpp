@@ -22,9 +22,9 @@ mergeDicts()
 
 Merge to global dict.*/
 
-void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_map<std::string, int> &dict,
-                  std::mutex &globalDictMutex,
-                  std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish) {
+void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts) {
+
+    //std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish
 
     std::map<std::string, int> localDict;
 #ifdef SERIAL
@@ -32,22 +32,83 @@ void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_ma
 #endif
 
     while (true) {
-        std::string file;
+        ReadFile file;
         try {
             file = filesContents.deque();
-            if (std::equal(file.begin(), file.end(), "")) {
+            if (file.content == "") {
                 // don't need mutex because queue is empty => other threads wait
-                timeFindingFinish = get_current_time_fenced();
-                filesContents.enque("");
+                filesContents.enque(file);
+                timeIndexingFinish = get_current_time_fenced();
                 break;
             }
         } catch (std::error_code e) {
             std::cerr << "Error code " << e << ". Occurred while working with queue in thread." << std::endl;
             continue;
         }
-        std::vector<std::string> words;
 
-        indexFile(words, file);
+/*        if (file.extension == ".zip"){
+            printf("zip founded\n");
+            struct archive *a;
+            struct archive_entry *entry;
+            int r;
+            int64_t length;
+            void *buf;
+            a = archive_read_new();
+            archive_read_support_filter_all(a);
+            archive_read_support_format_all(a);
+
+            r = archive_read_open_memory(a, file.buff, file.length);
+            if (r != ARCHIVE_OK){
+                exit(23);
+            }
+            ReadFile readFile;
+            while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+                std::string name = archive_entry_pathname(entry), ext;
+                int p = name.find('.');
+                ext = name.substr(p, name.size());
+                name = name.substr(0, p);
+                if (ext == ".txt") {
+                    length = archive_entry_size(entry);
+                    buf = malloc(length);
+                    archive_read_data(a, buf, length);
+                    printf("%s\n", (char *) buf);
+
+                    std::string content{(char *)buf};
+                    readFile.content = std::move(content);
+                    free(buf);
+                    readFile.extension = ".txt";
+                    readFile.filename = name;
+
+                    filesContents.enque(std::move(readFile));
+                } else if (name == ".zip" ) {
+                    length = archive_entry_size(entry);
+                    buf = malloc(length);
+                    archive_read_data(a, buf, length);
+                    printf("h - %s\n", (char *) buf);
+
+                    readFile.buff = buf;
+                    free(buf);
+                    readFile.content = "not empty";
+                    readFile.length = length;
+                    readFile.extension = ".zip";
+                    readFile.filename = name;
+                    filesContents.enque(std::move(readFile));
+                }
+            }
+            continue;
+
+        }*/
+
+        printf("check\n");
+        std::vector<std::string> words;
+        try{
+
+            indexFile(words, file.content);
+        } catch(std::error_code e){
+            printf("Indexing error");
+            exit(259);
+        }
+
 
         for (auto &word: words) {
             if (localDict.find(word) != localDict.end()) {
@@ -57,9 +118,9 @@ void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_ma
             }
         }
 
-        globalDictMutex.lock();
-        mergeDicts(dict, localDict);
-        globalDictMutex.unlock();
+
+        dicts.enque(localDict);
+
         localDict.clear();
 
 #ifdef SERIAL
@@ -67,17 +128,31 @@ void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_ma
         std::cout << fileNumber << "\n";
 #endif
     }
+    if (numOfWorkingIndexers == 1){
+        numOfWorkingIndexersMutex.lock();
+        numOfWorkingIndexers = 0;
+        numOfWorkingIndexersMutex.unlock();
+
+        localDict.clear();
+        dicts.enque(localDict);
+    } else {
+        numOfWorkingIndexersMutex.lock();
+        numOfWorkingIndexers--;
+        numOfWorkingIndexersMutex.unlock();
+
+    }
 }
 
 void indexFile(std::vector<std::string> &words, std::string &file) {
 
     try {
-        std::for_each(file.begin(), file.end(), [](char &c) {
-            c = std::tolower(c);
-        });
+        boost::locale::normalize(file);
+        boost::locale::fold_case(file);
     } catch (std::error_code e) {
         std::cerr << "Error code " << e << ". Occurred while transforming word to lowercase" << std::endl;
     }
+
+
     size_t start_pos = 0;
     try {
         while ((start_pos = file.find(std::string("\n"), start_pos)) != std::string::npos) {

@@ -8,7 +8,7 @@
 #include <iostream>
 #include "thread_safe_queue.h"
 #include <filesystem>
-#include <string>
+#include <string.h>
 #include <vector>
 #include <mutex>
 #include <thread>
@@ -17,10 +17,14 @@
 #include <fstream>
 #include <algorithm>
 #include <locale>
+#include <archive.h>
+#include <archive_entry.h>
 #include "time_measurement.h"
+#include "ReadFile.h"
+#include "boost/locale.hpp"
 
 
-void overworkFile(ThreadSafeQueue<std::string> &filesContents, std::unordered_map<std::string, int>& dict, std::mutex &mut, std::chrono::time_point<std::chrono::high_resolution_clock> &timeFindingFinish);
+void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, std::chrono::time_point<std::chrono::system_clock> &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts);
 
 void indexFile(std::vector <std::string> &words, std::string& file);
 

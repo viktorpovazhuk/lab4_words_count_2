@@ -9,15 +9,19 @@
 #include "time_measurement.h"
 #include "ReadFile.h"
 
+#include <archive.h>
+#include <archive_entry.h>
 #include <filesystem>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 namespace fs = std::filesystem;
 
 using std::string;
 
 void findFiles(string &filesDirectory, ThreadSafeQueue<fs::path> &paths);
-void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &filesContents, std::chrono::time_point<std::chrono::high_resolution_clock> &timeReadingFinish);
+void checkZip(ThreadSafeQueue<ReadFile> &filesContents, ReadFile *file);
+void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &filesContents, int maxFileSize, std::chrono::time_point<std::chrono::high_resolution_clock> &timeReadingFinish);
 
 #endif //INDEX_FILES_FILES_METHODS_H
