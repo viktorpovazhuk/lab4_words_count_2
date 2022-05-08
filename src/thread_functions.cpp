@@ -46,63 +46,10 @@ void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingInd
             continue;
         }
 
-/*        if (file.extension == ".zip"){
-            printf("zip founded\n");
-            struct archive *a;
-            struct archive_entry *entry;
-            int r;
-            int64_t length;
-            void *buf;
-            a = archive_read_new();
-            archive_read_support_filter_all(a);
-            archive_read_support_format_all(a);
-
-            r = archive_read_open_memory(a, file.buff, file.length);
-            if (r != ARCHIVE_OK){
-                exit(23);
-            }
-            ReadFile readFile;
-            while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
-                std::string name = archive_entry_pathname(entry), ext;
-                int p = name.find('.');
-                ext = name.substr(p, name.size());
-                name = name.substr(0, p);
-                if (ext == ".txt") {
-                    length = archive_entry_size(entry);
-                    buf = malloc(length);
-                    archive_read_data(a, buf, length);
-                    printf("%s\n", (char *) buf);
-
-                    std::string content{(char *)buf};
-                    readFile.content = std::move(content);
-                    free(buf);
-                    readFile.extension = ".txt";
-                    readFile.filename = name;
-
-                    filesContents.enque(std::move(readFile));
-                } else if (name == ".zip" ) {
-                    length = archive_entry_size(entry);
-                    buf = malloc(length);
-                    archive_read_data(a, buf, length);
-                    printf("h - %s\n", (char *) buf);
-
-                    readFile.buff = buf;
-                    free(buf);
-                    readFile.content = "not empty";
-                    readFile.length = length;
-                    readFile.extension = ".zip";
-                    readFile.filename = name;
-                    filesContents.enque(std::move(readFile));
-                }
-            }
-            continue;
-
-        }*/
-
         printf("check\n");
+        //boost::locale::boundary::ssegment_index words;
         std::vector<std::string> words;
         try{
-
             indexFile(words, file.content);
         } catch(std::error_code e){
             printf("Indexing error");
@@ -146,37 +93,23 @@ void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingInd
 void indexFile(std::vector<std::string> &words, std::string &file) {
 
     try {
-        boost::locale::normalize(file);
-        boost::locale::fold_case(file);
+        //boost::locale::normalize(file);
+        //boost::locale::fold_case(file);
     } catch (std::error_code e) {
         std::cerr << "Error code " << e << ". Occurred while transforming word to lowercase" << std::endl;
     }
 
 
-    size_t start_pos = 0;
-    try {
-        while ((start_pos = file.find(std::string("\n"), start_pos)) != std::string::npos) {
-            file.replace(start_pos, std::string("\n").length(), std::string(" "));
-            start_pos += std::string(" ").length();
-        }
 
-        start_pos = 0;
-        while ((start_pos = file.find(std::string("\r"), start_pos)) != std::string::npos) {
-            file.replace(start_pos, std::string("\r").length(), std::string(" "));
-            start_pos += std::string(" ").length();
-        }
-    } catch (std::error_code e) {
-        std::cerr << "Error code " << e << ". Occurred while deleting /n and /r from files" << std::endl;
-    }
 
 
     try {
-        std::stringstream s(file);
-        std::string s2;
+        //words(boost::locale::boundary::word,file.begin(),file.end());
+        //words.rule(boost::locale::boundary::word_letters);
 
-        while (std::getline(s, s2, ' ')) {
-            words.push_back(s2);
-        }
+
+
+
     } catch (std::error_code e) {
         std::cerr << "Error code " << e << ". Occurred while splitting file into words" << std::endl;
     }

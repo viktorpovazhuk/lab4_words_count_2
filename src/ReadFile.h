@@ -8,8 +8,6 @@
 #include <string>
 
 struct ReadFile {
-    void * buff;
-    int64_t length;
     std::string content;
     std::string extension;
     std::string filename;

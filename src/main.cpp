@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::thread> mergingThreads;
     mergingThreads.reserve(numberOfMergingThreads);
 
+
     int numOfWorkingIndexers = numberOfIndexingThreads;
     std::mutex numOfWorkingIndexersMutex;
 

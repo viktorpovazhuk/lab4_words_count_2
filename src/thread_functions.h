@@ -21,7 +21,7 @@
 #include <archive_entry.h>
 #include "time_measurement.h"
 #include "ReadFile.h"
-#include "boost/locale.hpp"
+//#include "boost/locale.hpp"
 
 
 void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, std::chrono::time_point<std::chrono::system_clock> &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts);
