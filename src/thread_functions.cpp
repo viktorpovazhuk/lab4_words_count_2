@@ -46,20 +46,17 @@ void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingInd
             continue;
         }
 
-        printf("check - %s\n", file.content.c_str());
-        boost::locale::boundary::ssegment_index words(boost::locale::boundary::word, file.content.begin(), file.content.end());
-        words.rule(boost::locale::boundary::word_letters);
 
         try{
             boost::locale::normalize(file.content);
             boost::locale::fold_case(file.content);
 
-
-
         } catch(std::error_code e){
             printf("Indexing error");
         }
 
+        boost::locale::boundary::ssegment_index words(boost::locale::boundary::word, file.content.begin(), file.content.end());
+        words.rule(boost::locale::boundary::word_letters);
 
         for (auto &word: words) {
             if (localDict.find(word) != localDict.end()) {
