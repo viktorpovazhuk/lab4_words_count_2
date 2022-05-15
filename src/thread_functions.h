@@ -26,8 +26,6 @@
 
 void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, std::chrono::time_point<std::chrono::system_clock> &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts);
 
-boost::locale::boundary::ssegment_index indexFile(boost::locale::boundary::ssegment_index &words, std::string& file);
-
 void mergeDicts(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, std::chrono::time_point<std::chrono::high_resolution_clock> &timeMergingFinish);
 
 std::map<std::string, int> getDict(ThreadSafeQueue<std::map<std::string, int>> &dictsQueue, int &numOfWorkingIndexers);
