@@ -21,12 +21,6 @@ void findFiles(string &filesDirectory, ThreadSafeQueue<fs::path> &paths) {
 void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &filesContents, int maxFileSize, TimePoint &timeReadingFinish) {
     auto path = paths.deque();
 
-    struct archive *a;
-    struct archive_entry *entry;
-    int r;
-    int64_t length;
-    void *buf;
-
 
     while (path != fs::path("")) {
         if (fs::file_size(path) >= maxFileSize){
@@ -45,39 +39,11 @@ void readFiles(ThreadSafeQueue<fs::path> &paths, ThreadSafeQueue<ReadFile> &file
             filesContents.enque(std::move(readFile));
         }
         else if (path.extension() == ".zip") {
-
-            a = archive_read_new();
-            archive_read_support_filter_all(a);
-            archive_read_support_format_all(a);
-            std::ifstream raw_file(path, std::ios::binary);
-            raw_file.seekg(0, std::ios::end);
-            size_t file_size = raw_file.tellg();
-
-            r = archive_read_open_filename(a, path.c_str(), file_size);
-            if (r != ARCHIVE_OK){
-                exit(26);
-            }
-            while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
-                ReadFile readFile;
-                std::string name = archive_entry_pathname(entry), ext;
-                int p = name.find('.');
-                ext = name.substr(p, name.size());
-                name = name.substr(0, p);
-
-                if (ext == ".txt") {
-                    length = archive_entry_size(entry);
-                    buf = malloc(length);
-                    archive_read_data(a, buf, length);
-
-                    std::string content{(char *)buf};
-                    readFile.content = std::move(content);
-                    free(buf);
-                    readFile.extension = ".txt";
-                    readFile.filename = name;
-                    filesContents.enque(std::move(readFile));
-                }
-
-            }
+            ReadFile readFile;
+            readFile.content = path;
+            readFile.extension = path.extension();
+            readFile.filename = path.filename();
+            filesContents.enque(std::move(readFile));
 
         }
         path = paths.deque();
