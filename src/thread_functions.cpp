@@ -7,20 +7,6 @@
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 using mapStrInt = std::map<std::string, int>;
 
-//#define SERIAL
-
-/*
-overworkFile()
-
-Main func in thread. Take element from the queue, index it and merge with global dict.
-
-indexFile()
-
-Split in words, format and count. Do it in reference of dict.
-
-mergeDicts()
-
-Merge to global dict.*/
 
 void overworkFile(ThreadSafeQueue<ReadFile> &filesContents, int &numOfWorkingIndexers, std::mutex& numOfWorkingIndexersMutex, TimePoint &timeIndexingFinish, ThreadSafeQueue<std::map<std::string, int>> &dicts) {
 
