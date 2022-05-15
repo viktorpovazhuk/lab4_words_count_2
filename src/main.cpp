@@ -187,12 +187,15 @@ int main(int argc, char *argv[]) {
     auto timeWriting = to_us(timeWritingFinish - timeWritingStart);
     auto timeTotal = to_us(totalTimeFinish - timeStart);
 
-    // TODO: split in index and merge?
     std::cout << "Total=" << timeTotal << "\n"
-              << "Reading=" << timeReading << "\n"
-              << "Indexing=" << timeIndexing << "\n"
-              << "Merging=" << timeMerging << "\n"
-              << "Writing=" << timeWriting;
+              << "Reading=" << timeReading << "\n";
+    if (timeMerging >= timeIndexing) {
+        std::cout << "Finding=" << timeMerging << "\n";
+    }
+    else {
+        std::cout << "Finding=" << timeIndexing << "\n";
+    }
+    std::cout << "Writing=" << timeWriting;
 
     return 0;
 }
