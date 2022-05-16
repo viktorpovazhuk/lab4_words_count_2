@@ -1,0 +1,10 @@
+#ifndef CONVERTER_ERRORS_H
+#define CONVERTER_ERRORS_H
+
+enum Errors {
+    OPEN_CFG_FILE,
+    READ_CFG_FILE,
+    OPTIONS_PARSER
+};
+
+#endif //CONVERTER_ERRORS_H

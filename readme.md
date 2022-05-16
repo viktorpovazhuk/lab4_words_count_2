@@ -1,44 +1,75 @@
-<mark>Template for your README. Remove all unused parts and instructions</mark>
+# Lab work 3: Parallel indexing of words
 
-# Lab work <mark>NUMBER</mark>: <mark>SHORT TOPIC</mark>
-Authors (team): <mark>AUTHORS WITH GITHUB LINKS</mark><br>
-Variant: <mark>VARIANT SHOULD BE HERE</mark>
+Authors (team):
+
+- [Petro Hentosh]()
+- [Viktor Povazhuk](https://github.com/viktorpovazhuk)
+
 ## Prerequisites
 
-<mark>LIST LIBRARIES/TOOLS/OTHER UTILITIES THAT NEED TO BE INSTALLED (E.G. GCC, OPENMP, CMAKE ETC)</mark>
+Tools to be installed:
+
+* on each OS:
+    - pip
+* on Windows:
+    - MinGW
+    - gcc (in MinGW)
+    - cmake (in MinGW)
+    - boost (in MinGW)
+* on Linux:
+    - gcc
+    - cmake
+    - boost
+* on Apple:
+    - gcc
+    - cmake
+    - boost
 
 ### Compilation
 
-<mark>HOW TO COMPILE YOUR PROGRAM? (RECOMMENDED: ./comile.sh)</mark>
+To compile program:
+
+On Windows run MinGW and cd to repository directory.
+```shell
+[user@pc .] $ ./compile.sh --optimize-build
+```
 
 ### Installation
 
-<mark>DESCRIBE THE INSTALLATION PROCESS (USE ./dependencies FOLDER)</mark>
+Compiled executable: automatically installed in ./bin during compilation.
 
-<mark>Note: For Python scripts, You must add `requirenments.txt` 
-file and add your env to the `.gitignore` file!</mark>
+Create virtual python environment and install requirements in ./dependencies.
 
 ### Usage
 
-<mark>PROVIDE AN EXAMPLE OF HOW TO RUN YOUR PROGRAM (IT CAN BE A_flag COMMAND LINE WITH INPUT AND EXPECTED OUTPUT)</mark>
+1. Put your data in some folder on computer.
+2. Specify options in configuration file in ./configs/index.cfg
+3. Run the program or run the script.
 
-<mark>Note: if your project needs or generates any data, media and so on -- put them
-into the data folder</mark> 
+Example of program run:
+
+```shell
+[user@pc .]$ cd bin
+[user@pc bin]$ ./counter ../configs/index.cfg
+
+Total=12767229
+Reading=8022285
+Finding=9437633
+Writing=3329271
+```
+
+Example of script run:
+
+```shell
+[user@pc .]$ cd bin
+[user@pc bin]$ python ../scripts/script.py
+```
 
 ### Important!
 
-<mark>WHAT ELSE SHOULD WE KNOW ABOUT YOUR WORK? (E.G. KNOWN ISSUES, BUGS, SPECIAL BEHAVIOR ETC)</mark>
+Tested on Windows and Ubuntu.
 
 ### Results
 
 <mark>DESCRIBE THE RESULTS OF THE WORK YOU DID. WHAT DID YOU LEARN OR FIND INTERESTING?</mark>
-
-# Additional tasks
-<mark>IF APPLICABLE, LIST ALL THE EXTRA FEATURES YOU ADDED. PROVIDE DETAILS<mark>
-
-# ATTENTION!
-  
-Additional tasks not listed in the previous paragraph would not be graded.
-
-Be sure to provide a complete list of authors.
 
