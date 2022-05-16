@@ -75,13 +75,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
 #        src/options_parser.cpp src/options_parser.h
 #        src/methods.h src/integration_structures.h)
 #
-add_executable(${TEST_EXECUTABLE} tests/test_ts_queue.cpp
-		src/options_parser.cpp src/options_parser.h
-		src/thread_safe_queue.h tests/pseudocode.cpp)
-
 #! Put path to your project headers
 target_include_directories(${PROJECT_NAME} PRIVATE options_parser)
-target_include_directories(${TEST_EXECUTABLE} PRIVATE options_parser)
+#target_include_directories(${TEST_EXECUTABLE} PRIVATE options_parser)
 #target_include_directories(${ONE_THREAD_EXE} PRIVATE options_parser)
 
 #! Add external packages
@@ -94,8 +90,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${LibArchive_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} Boost::program_options Boost::system Boost::locale)
 target_link_libraries(${PROJECT_NAME} ${LibArchive_LIBRARIES})
 
-target_include_directories(${TEST_EXECUTABLE} PRIVATE ${Boost_INCLUDE_DIR})
-target_link_libraries(${TEST_EXECUTABLE} Boost::program_options Boost::system)
+#target_include_directories(${TEST_EXECUTABLE} PRIVATE ${Boost_INCLUDE_DIR})
+#target_link_libraries(${TEST_EXECUTABLE} Boost::program_options Boost::system)
 
 #target_include_directories(${ONE_THREAD_EXE} PRIVATE ${Boost_INCLUDE_DIR})
 #target_link_libraries(${ONE_THREAD_EXE} Boost::program_options Boost::system)
