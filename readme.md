@@ -60,9 +60,9 @@ Writing=3329271
 
 Example of script run:
 
+Open shell in directory with Cmake file
 ```shell
-[user@pc .]$ cd bin
-[user@pc bin]$ python ../scripts/script.py
+[user@pc ~/lab4]$ python3 ./src/main_pr.py
 ```
 
 ### Important!
