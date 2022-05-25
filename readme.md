@@ -71,5 +71,7 @@ Tested on Windows and Ubuntu.
 
 ### Results
 
-<mark>DESCRIBE THE RESULTS OF THE WORK YOU DID. WHAT DID YOU LEARN OR FIND INTERESTING?</mark>
+We used smaller archive.
+Statistics of run on different number of threads:
 
+![graph](Figure_1.png)

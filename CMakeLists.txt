@@ -8,14 +8,10 @@ set(PROJECT_NAME counter)
 project(${PROJECT_NAME} C CXX) # project(${PROJECT_NAME} C CXX ASM)
 
 set(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 ##########################################################
 # Other variables
 ##########################################################
-
-set(TEST_EXECUTABLE test_ts_queue)
-#set(ONE_THREAD_EXE serial)
 
 ##########################################################
 # User configurable options of the template
@@ -71,15 +67,6 @@ add_executable(${PROJECT_NAME} src/main.cpp
 		src/thread_functions.h src/thread_functions.cpp
 		src/errors.h src/ReadFile.h)
 
-#add_executable(${ONE_THREAD_EXE} src/serial.cpp
-#        src/options_parser.cpp src/options_parser.h
-#        src/methods.h src/integration_structures.h)
-#
-#! Put path to your project headers
-target_include_directories(${PROJECT_NAME} PRIVATE options_parser)
-#target_include_directories(${TEST_EXECUTABLE} PRIVATE options_parser)
-#target_include_directories(${ONE_THREAD_EXE} PRIVATE options_parser)
-
 #! Add external packages
 # options_parser requires boost::program_options library
 find_package(Boost 1.71.0 COMPONENTS program_options system locale REQUIRED)
@@ -90,11 +77,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${LibArchive_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} Boost::program_options Boost::system Boost::locale)
 target_link_libraries(${PROJECT_NAME} ${LibArchive_LIBRARIES})
 
-#target_include_directories(${TEST_EXECUTABLE} PRIVATE ${Boost_INCLUDE_DIR})
-#target_link_libraries(${TEST_EXECUTABLE} Boost::program_options Boost::system)
+find_package(Threads REQUIRED)
 
-#target_include_directories(${ONE_THREAD_EXE} PRIVATE ${Boost_INCLUDE_DIR})
-#target_link_libraries(${ONE_THREAD_EXE} Boost::program_options Boost::system)
+target_link_libraries("${PROJECT_NAME}" ${CMAKE_THREAD_LIBS_INIT})
 
 ##########################################################
 # Fixed CMakeLists.txt part
